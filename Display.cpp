@@ -208,7 +208,14 @@ int Display::handleEvents() {
       case SDL_MOUSEBUTTONDOWN:
         mouseDown = true;
         SDL_GetMouseState(&x, &y);
-        downRect = {x - (x % 64) - camera.getX(), y - (y % 64) - camera.getY(), 63, 63};
+        downRect = {x + camera.getX() - ((x + camera.getX()) % 64), y + camera.getY() - ((y + camera.getY()) % 64), 63, 63};
+        /*
+        cout << "---------------------" << endl;
+        cout << x << " " << y << endl;
+        cout << camera.getX() << " " << camera.getY() << endl;
+        cout << downRect.x << " " << downRect.y << endl;
+        cout << "---------------------" << endl;
+        */
         break;
       case SDL_MOUSEBUTTONUP:
         mouseDown = false;
@@ -247,14 +254,12 @@ void Display::render(Camera camera) {
     for(int j = 0; j < SCREEN_HEIGHT / 64 + 1; j++) {
       //SDL_SetRenderDrawColor(renderer, 0x00, 0x88, 0x00, 0xFF);
 
-      tile.x = i * 64 - camera.getX();
-      tile.y = j * 64 - camera.getY();
+      tile.x = i * 64;
+      tile.y = j * 64;
       tile.w = 64;
       tile.h = 64;
 
       render(gridTexture, tile, camera);
-      //if(onScreen(tile, camera))
-      //  SDL_RenderCopy(renderer, gridTexture, NULL, &tile);
 
       //if((i + j) % 2 == 0)
       //  SDL_RenderFillRect(renderer, &tile);
@@ -262,15 +267,16 @@ void Display::render(Camera camera) {
 
   SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
 
-  SDL_RenderFillRect(renderer, &downRect);
+  //SDL_RenderFillRect(renderer, &downRect);
   
+  //render down rect
+  render(downRect, camera);
   
+  //render HUD
   SDL_Rect msgRect;
   msgRect.x = 100;
   msgRect.y = 100;
   SDL_QueryTexture(robotoTestString, NULL, NULL, &msgRect.w, &msgRect.h);
-  //msgRect.w = robotoTestStringWidth;
-  //msgRect.h = robotoTestStringHeight;
 
   SDL_Rect sideticksRect;
   sideticksRect.x = 0;
@@ -278,9 +284,6 @@ void Display::render(Camera camera) {
   sideticksRect.w = 32;
   sideticksRect.h = SCREEN_HEIGHT;
   
-  
-  //SDL_RenderCopy(renderer, robotoTestString, NULL, &msgRect);
-
   SDL_RenderCopy(renderer, sideticksTexture, NULL, &sideticksRect);
 
   //render crosshair
@@ -288,8 +291,14 @@ void Display::render(Camera camera) {
 
   //show frame
   SDL_RenderPresent(renderer);
+}
 
-  //cout << x << " " << y << endl;
+void Display::render(SDL_Rect globalArea, Camera camera) {
+  if(onScreen(globalArea, camera)) {
+    globalArea.x -= camera.getX();
+    globalArea.y -= camera.getY();
+    SDL_RenderFillRect(renderer, &globalArea);
+  }
 }
 
 void Display::render(SDL_Texture * texture, SDL_Rect globalArea, Camera camera) {

@@ -29,6 +29,7 @@ class Display{
   	int handleEvents();
     bool onScreen(SDL_Rect rect, Camera camera);
   	void render(Camera camera);
+    void render(SDL_Rect area, Camera camera);
     void render(SDL_Texture * texture, SDL_Rect area, Camera camera);
   	void stop();
 
