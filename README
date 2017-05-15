@@ -1,0 +1,43 @@
+--------------------------------------------------------------------------------
+                   _____ _____ _     _____ _____ _   _ _____                    
+                  |  ___|  _  \ |   |  ___|  _  | \_/ |  ___|                   
+                  | |___| | | | |   | |  _| |_| | \_/ | |___                    
+                  |___  | | | | |   | | | |  _  | | | |  ___|                   
+                   ___| | |_| | |___| |_| | | | | | | | |___                    
+                  |_____|_____/_____|_____|_| |_|_| |_|_____|                   
+--------------------------------------------------------------------------------
+2D engine for rendering game along with its images, texts, a camera relative to
+global grid, and mouse/keybaord input event handling.
+--------------------------------------------------------------------------------
+Dependencies:
+  C++11
+    - SDL2 (included)
+    - SDL_Image (included)
+    - SDL2_TTF (included)
+
+--------------------------------------------------------------------------------
+Building program:
+
+Run make in the directory containing Makefile (same as this README)
+
+--------------------------------------------------------------------------------
+Running program:
+
+  Linux:
+    ./sdlGame
+  Windows:
+    sdlGame.exe
+
+--------------------------------------------------------------------------------
+Changelog:
+  02-07-17 to 04-27-17
+    Display
+      - All objects relative to global grid.
+      - Currently renders a texture over grid pattern.
+      - Mouse cursor has texture attached.
+      - Clicking is translated to global coordinates using camera's coords.
+      - Also supports rendering fonts, currently uses Roboto.
+
+    Camera
+      - Has relative position to global position.
+      - Can get / set positions and width (ints) and add to x or y coords.
