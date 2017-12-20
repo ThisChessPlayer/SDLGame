@@ -28,13 +28,18 @@ using std::cout;
 using std::endl;
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
+const int MAP_WIDTH = 500;
+const int MAP_HEIGHT = 500;
+const int TILE_SIZE = 64;
 
 SDL_Window * window = NULL; //window to render to
 SDL_Surface * screenSurface = NULL; //surface contained by window
 SDL_Renderer * renderer = NULL;
 SDL_Texture * mouseTexture;
 SDL_Texture * gridTexture;
-SDL_Texture * sideticksTexture;
+//SDL_Texture * horizLineTexture;
+//SDL_Texture * vertLineTexture;
+//SDL_Texture * sideticksTexture;
 SDL_Texture * robotoTestString;
 
 SDL_Event event;
@@ -42,6 +47,7 @@ SDL_Rect mouseRect;
 SDL_Rect tile;
 SDL_Rect downRect;
 SDL_Rect upRect;
+SDL_Rect mouseTile;
 
 TTF_Font * roboto;
 
@@ -109,7 +115,9 @@ int Display::load() {
 
   mouseTexture = loadTexture("crosshair16.png");
   gridTexture = loadTexture("gridtest.png");
-  sideticksTexture = loadTexture("sideticks.png");
+  //horizLineTexture = loadTexture("horizline.png");
+  //vertLineTexture = loadTexture("vertline.png");
+  //getXsideticksTexture = loadTexture("sideticks.png");
   roboto = loadTTF("roboto/Roboto-Light.ttf", 12);
   robotoTestString = loadTTFString(roboto, white, "hi");
   //TODO actually check whether texture was loaded, unloaded -> NULL
@@ -209,7 +217,11 @@ int Display::handleEvents() {
       case SDL_MOUSEBUTTONDOWN:
         mouseDown = true;
         SDL_GetMouseState(&x, &y);
-        downRect = {x + camera.getX() - ((x + camera.getX()) % 64), y + camera.getY() - ((y + camera.getY()) % 64), 63, 63};
+
+        //local tile
+        x = camera.gToL(x, true);
+        y = camera.gToL(y, false);
+        downRect = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
         /*
         cout << "---------------------" << endl;
         cout << x << " " << y << endl;
@@ -221,22 +233,47 @@ int Display::handleEvents() {
       case SDL_MOUSEBUTTONUP:
         mouseDown = false;
         SDL_GetMouseState(&x, &y);
-        upRect = {x - (x % 64), y - (y % 64), 64, 64};
-        break;
+
+        //local tile
+        x = camera.gToL(x, true);
+        y = camera.gToL(y, false);
+        upRect = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
+        //upRect = {x - (x % 64), y - (y % 64), 64, 64};
         break;
       case SDL_MOUSEMOTION:
 
-        //get mouse position, draw rect
+        //get mouse position
         SDL_GetMouseState(&x, &y);
+
+        //global pointer
         mouseRect = {x - 8, y - 8, 16, 16};
 
-        //cout << x << " " << y << endl;
+        //local tile
+        x = camera.gToL(x, true);
+        y = camera.gToL(y, false);
+        mouseTile = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
+
+        //cout << x << " " << y << " " << camera.gToL(x, true) << " " << camera.gToL(y, false) << endl;
+      default:
+        if(event.wheel.y == 1) { //scroll up
+          camera.setXScale(camera.getXScale() * 2);
+          camera.setYScale(camera.getYScale() * 2);
+        }
+        else if(event.wheel.y == -1) { //scroll down
+          camera.setXScale(camera.getXScale() * 0.5);
+          camera.setYScale(camera.getYScale() * 0.5);
+        }
     }
   }
   return 0;
 }
 
 void Display::render(Camera camera) {
+
+  float x_scale = camera.getXScale();
+  float y_scale = camera.getYScale();
+  SDL_RenderSetScale(renderer, x_scale, y_scale);
+
   //clear screen
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
   SDL_RenderClear(renderer);
@@ -251,34 +288,59 @@ void Display::render(Camera camera) {
   //SDL_SetRenderDrawColor(renderer, 0x00, 0x88, 0x00, 0xFF);
 
   //render tiles
-  for(int i = 0; i < SCREEN_WIDTH / 64 + 1; i++)
-    for(int j = 0; j < SCREEN_HEIGHT / 64 + 1; j++) {
+  //for(int i = 0; i < SCREEN_WIDTH / TILE_SIZE + 1; i++)
+  //  for(int j = 0; j < SCREEN_HEIGHT / TILE_SIZE + 1; j++) {
+
+  for(int i = camera.getX() / TILE_SIZE; i < (camera.getX() + camera.getWidth()) / TILE_SIZE + 1; i++)
+    for(int j = camera.getY() / TILE_SIZE; j < (camera.getY() + camera.getHeight()) / TILE_SIZE + 1; j++) {
       //SDL_SetRenderDrawColor(renderer, 0x00, 0x88, 0x00, 0xFF);
 
-      tile.x = i * 64;
-      tile.y = j * 64;
-      tile.w = 64;
-      tile.h = 64;
+      tile.x = i * TILE_SIZE;
+      tile.y = j * TILE_SIZE;
+
+      tile.w = TILE_SIZE;
+      tile.h = TILE_SIZE;
 
       render(gridTexture, tile, camera);
+
+      /*
+      tile.w = TILE_SIZE;
+      tile.h = 1;
+      render(horizLineTexture, tile, camera);
+
+      tile.w = 1;
+      tile.h = TILE_SIZE;
+      render(vertLineTexture, tile, camera);
+      */
 
       //if((i + j) % 2 == 0)
       //  SDL_RenderFillRect(renderer, &tile);
     }
 
-  SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
+  SDL_SetRenderDrawColor(renderer, 0x22, 0x22, 0x22, 0xFF);
 
-  //SDL_RenderFillRect(renderer, &downRect);
+  //render hover tile
+  render(mouseTile, camera);
+
+  SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
   
   //render down rect
   render(downRect, camera);
+
+  SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0xFF);
+
+  render(upRect, camera);
   
   //render HUD
+  SDL_RenderSetScale(renderer, 1, 1);
+  SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
   SDL_Rect msgRect;
   msgRect.x = 100;
   msgRect.y = 100;
   SDL_QueryTexture(robotoTestString, NULL, NULL, &msgRect.w, &msgRect.h);
+  SDL_RenderCopy(renderer, robotoTestString, NULL, &msgRect);
 
+  /*
   SDL_Rect sideticksRect;
   sideticksRect.x = 0;
   sideticksRect.y = 0;
@@ -286,6 +348,7 @@ void Display::render(Camera camera) {
   sideticksRect.h = SCREEN_HEIGHT;
   
   SDL_RenderCopy(renderer, sideticksTexture, NULL, &sideticksRect);
+  */
 
   //render crosshair
   SDL_RenderCopy(renderer, mouseTexture, NULL, &mouseRect);
@@ -324,6 +387,8 @@ bool Display::onScreen(SDL_Rect rect, Camera camera) {
 void Display::stop() {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
+
+  TTF_CloseFont(roboto);
   TTF_Quit();
   SDL_Quit();
 }
