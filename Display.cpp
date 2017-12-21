@@ -219,8 +219,8 @@ int Display::handleEvents() {
         SDL_GetMouseState(&x, &y);
 
         //local tile
-        x = camera.gToL(x, true);
-        y = camera.gToL(y, false);
+        x = camera.lToG(x, true);
+        y = camera.lToG(y, false);
         downRect = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
         /*
         cout << "---------------------" << endl;
@@ -235,8 +235,8 @@ int Display::handleEvents() {
         SDL_GetMouseState(&x, &y);
 
         //local tile
-        x = camera.gToL(x, true);
-        y = camera.gToL(y, false);
+        x = camera.lToG(x, true);
+        y = camera.lToG(y, false);
         upRect = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
         //upRect = {x - (x % 64), y - (y % 64), 64, 64};
         break;
@@ -249,8 +249,8 @@ int Display::handleEvents() {
         mouseRect = {x - 8, y - 8, 16, 16};
 
         //local tile
-        x = camera.gToL(x, true);
-        y = camera.gToL(y, false);
+        x = camera.lToG(x, true);
+        y = camera.lToG(y, false);
         mouseTile = {x - (x % TILE_SIZE), y - (y % TILE_SIZE), TILE_SIZE - 1, TILE_SIZE - 1};
 
         //cout << x << " " << y << " " << camera.gToL(x, true) << " " << camera.gToL(y, false) << endl;
